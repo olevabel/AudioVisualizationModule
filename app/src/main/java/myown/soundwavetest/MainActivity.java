@@ -10,6 +10,7 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 
+import myown.soundwavetest.waveform.MicVolumeFragment;
 import myown.soundwavetest.waveform.Segment;
 import myown.soundwavetest.waveform.WaveformFragment;
 
@@ -21,7 +22,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         if (savedInstanceState == null) {
             getSupportFragmentManager().beginTransaction()
-                    .add(R.id.container, new CustomWaveformFragment())
+                    .add(R.id.container, new MicVolumeFragment())
                     .commit();
         }
     }

@@ -6,7 +6,10 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.drawable.ShapeDrawable;
 import android.media.MediaRecorder;
+import android.util.AttributeSet;
 import android.view.View;
+
+import java.io.IOException;
 
 /**
  * Created by Olev on 19/02/2016.
@@ -27,26 +30,18 @@ public class MicVolumeMeter extends View {
     Rect rect = new Rect(x, y, x + (baseWidth * nwidth) , y + height);
     ShapeDrawable shapeDrawable = new ShapeDrawable();
 
-    public MicVolumeMeter(Context context, MediaRecorder recorder) {
-        super(context);
-        this.recorder = recorder;
+    public MicVolumeMeter(Context context, AttributeSet attrs) {
+        super(context, attrs);
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
         changeColorAndSize();
-        initRecorder();
         shapeDrawable.setBounds(rect);
         shapeDrawable.getPaint().set(color);
         shapeDrawable.draw(canvas);
     }
 
-    private void initRecorder() {
-        recorder.setAudioSource(MediaRecorder.AudioSource.MIC);
-        recorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
-        recorder.setAudioEncoder(MediaRecorder.OutputFormat.AMR_NB);
-        recorder.setOutputFile();
-    }
 
     private void changeColorAndSize() {
         double amp = getAmplitude();
@@ -59,5 +54,9 @@ public class MicVolumeMeter extends View {
             return recorder.getMaxAmplitude();
         }
         return 0;
+    }
+
+    public void setRecorder(MediaRecorder recorder) {
+        this.recorder = recorder;
     }
 }
