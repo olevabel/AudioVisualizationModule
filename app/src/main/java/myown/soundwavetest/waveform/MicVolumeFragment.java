@@ -15,6 +15,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ProgressBar;
+import android.widget.Spinner;
 
 import java.io.DataOutputStream;
 import java.io.FileNotFoundException;
@@ -35,9 +36,11 @@ public class MicVolumeFragment extends Fragment {
     private static final int RECORDER_CHANNELS = AudioFormat.CHANNEL_IN_MONO;
     private static final int RECORDER_AUDIO_ENCODING = AudioFormat.ENCODING_PCM_16BIT;
     private MediaRecorder recorder;
-    boolean isRecording;
-    ProgressBar meter;
-    Handler handler = new Handler(Looper.getMainLooper());
+    private boolean isRecording;
+    private Spinner fileFormatSpinner;
+    private ProgressBar meter;
+    private int value = 0;
+    private Handler handler = new Handler(Looper.getMainLooper());
 
     @Nullable
     @Override
@@ -47,30 +50,26 @@ public class MicVolumeFragment extends Fragment {
         initRecorder();
         Button btnRecord = (Button) rootView.findViewById(R.id.btn_record);
         Button btnStop = (Button) rootView.findViewById(R.id.btn_stop);
-
+        fileFormatSpinner = (Spinner) rootView.findViewById(R.id.file_format_spinner);
         btnRecord.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-               if(recorder != null) {
-                   recorder.start();
-                   isRecording = true;
-                   new Thread(new Runnable() {
-                       @Override
-                       public void run() {
-                           while(isRecording) {
-                               final int progress = recorder.getMaxAmplitude();
-                               handler.postDelayed(new Runnable() {
-                                   @Override
-                                   public void run() {
-                                       meter.setProgress(progress );
-                                   }
-                               }, 2000);
-                           }
-                       }
-                   }).start();
+                if (recorder != null) {
+                    recorder.start();
+                    isRecording = true;
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            while(isRecording) {
+                                value = recorder.getMaxAmplitude();
+                                handler.postDelayed(update, 5000);
+                            }
+                        }
+                    }).start();
 
-               }
+                }
             }
+
         });
         btnStop.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -86,7 +85,6 @@ public class MicVolumeFragment extends Fragment {
     }
 
 
-
     private void initRecorder() {
         recorder = new MediaRecorder();
         recorder.setAudioSource(MediaRecorder.AudioSource.MIC);
@@ -100,5 +98,12 @@ public class MicVolumeFragment extends Fragment {
         }
 
     }
+
+    private Runnable update = new Runnable() {
+        @Override
+        public void run() {
+            meter.setProgress(value);
+        }
+    };
 
 }
