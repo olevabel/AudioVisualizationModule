@@ -1,11 +1,9 @@
 package myown.soundwavetest.waveform;
 
-import android.animation.ValueAnimator;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.Nullable;
@@ -13,32 +11,33 @@ import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.Spinner;
 
+import java.io.ByteArrayInputStream;
 import java.io.DataOutputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.Random;
-
+import java.io.OutputStream;
 
 import myown.soundwavetest.R;
-import myown.soundwavetest.waveform.view.MicVolumeMeter;
 
 /**
  * Created by olevabel on 28/02/16.
  */
-public class MicVolumeFragment extends Fragment {
+public class MicVolumeFragment extends Fragment implements AdapterView.OnItemSelectedListener {
 
     private static final int RECORDER_SAMPLE_RATE = 44000;
     private static final int RECORDER_CHANNELS = AudioFormat.CHANNEL_IN_MONO;
     private static final int RECORDER_AUDIO_ENCODING = AudioFormat.ENCODING_PCM_16BIT;
-    private MediaRecorder recorder;
+    private AudioRecord record;
     private boolean isRecording;
-    private Spinner fileFormatSpinner;
+    private Spinner sourceSpinner;
     private ProgressBar meter;
+    private short[] buffer = new short[1024];
     private int value = 0;
     private Handler handler = new Handler(Looper.getMainLooper());
 
@@ -47,22 +46,34 @@ public class MicVolumeFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_voice_meter, container, false);
         meter = (ProgressBar) rootView.findViewById(R.id.sound_meter);
-        initRecorder();
         Button btnRecord = (Button) rootView.findViewById(R.id.btn_record);
         Button btnStop = (Button) rootView.findViewById(R.id.btn_stop);
-        fileFormatSpinner = (Spinner) rootView.findViewById(R.id.file_format_spinner);
+        sourceSpinner = (Spinner) rootView.findViewById(R.id.source_spinner);
+        ArrayAdapter<CharSequence> arrayAdapter = ArrayAdapter.createFromResource(getActivity(), R.array.sources_array,android.R.layout.simple_spinner_item);
+        arrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        sourceSpinner.setAdapter(arrayAdapter);
+        sourceSpinner.setOnItemSelectedListener(this);
         btnRecord.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (recorder != null) {
-                    recorder.start();
+                if (initRecorder(MediaRecorder.AudioSource.MIC)) {
+                    record.startRecording();
                     isRecording = true;
                     new Thread(new Runnable() {
                         @Override
                         public void run() {
-                            while(isRecording) {
-                                value = recorder.getMaxAmplitude();
-                                handler.postDelayed(update, 5000);
+
+                            while (isRecording) {
+                                double sum = 0;
+                                int readSize = record.read(buffer, 0, buffer.length);
+                                for (int i = 0; i < readSize; i++) {
+                                        sum += buffer[i] * buffer[i];
+                                }
+                                if (readSize > 0) {
+                                    final double amplitude = sum / readSize;
+                                    value = (int) amplitude;
+                                }
+                                handler.postDelayed(update, 2000);
                             }
                         }
                     }).start();
@@ -74,9 +85,11 @@ public class MicVolumeFragment extends Fragment {
         btnStop.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (recorder != null) {
-                    recorder.stop();
+                if (record != null) {
+                    record.stop();
                     isRecording = false;
+                    value = 0;
+                    handler.post(update);
 
                 }
             }
@@ -85,18 +98,9 @@ public class MicVolumeFragment extends Fragment {
     }
 
 
-    private void initRecorder() {
-        recorder = new MediaRecorder();
-        recorder.setAudioSource(MediaRecorder.AudioSource.MIC);
-        recorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
-        recorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
-        recorder.setOutputFile(Environment.getExternalStorageDirectory().getAbsolutePath() + "/lahe.3gpp");
-        try {
-            recorder.prepare();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
+    private boolean initRecorder(int source) {
+        record = new AudioRecord(source, RECORDER_SAMPLE_RATE, RECORDER_CHANNELS, RECORDER_AUDIO_ENCODING, AudioRecord.getMinBufferSize(RECORDER_SAMPLE_RATE, RECORDER_CHANNELS, RECORDER_AUDIO_ENCODING));
+        return record.getState() == AudioRecord.STATE_INITIALIZED;
     }
 
     private Runnable update = new Runnable() {
@@ -106,4 +110,17 @@ public class MicVolumeFragment extends Fragment {
         }
     };
 
+    @Override
+    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+        if(position == 1) {
+            initRecorder(MediaRecorder.AudioSource.MIC);
+        } else {
+            initRecorder(MediaRecorder.AudioSource.CAMCORDER);
+        }
+    }
+
+    @Override
+    public void onNothingSelected(AdapterView<?> parent) {
+         initRecorder(MediaRecorder.AudioSource.CAMCORDER);
+    }
 }

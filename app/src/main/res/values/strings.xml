@@ -12,4 +12,8 @@
     <string name="time_seconds">seconds</string>
     <string name="btn_record">Record</string>
     <string name="btn_stop">Stop</string>
+    <string-array name="sources_array">
+        <item>UpperMic</item>
+        <item>LowerMic</item>
+    </string-array>
 </resources>

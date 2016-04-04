@@ -8,7 +8,7 @@
         android:id="@+id/sound_meter"
         style="?android:attr/progressBarStyleHorizontal"
         android:layout_width="300dp"
-        android:max="500"
+        android:max="1000"
         android:layout_height="48dp"
         android:indeterminate="false"
         android:indeterminateOnly="false" />
@@ -25,7 +25,7 @@
         android:layout_height="wrap_content"
         android:text="@string/btn_stop" />
     <Spinner
-        android:id="@+id/file_format_spinner"
+        android:id="@+id/source_spinner"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content">
 
