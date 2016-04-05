@@ -35,9 +35,9 @@ public class MicVolumeFragment extends Fragment implements AdapterView.OnItemSel
     private static final int RECORDER_AUDIO_ENCODING = AudioFormat.ENCODING_PCM_16BIT;
     private AudioRecord record;
     private boolean isRecording;
-    private Spinner sourceSpinner;
+    private boolean isInitialized;
     private ProgressBar meter;
-    private short[] buffer = new short[1024];
+    private short[] buffer = new short[2048];
     private int value = 0;
     private Handler handler = new Handler(Looper.getMainLooper());
 
@@ -48,15 +48,16 @@ public class MicVolumeFragment extends Fragment implements AdapterView.OnItemSel
         meter = (ProgressBar) rootView.findViewById(R.id.sound_meter);
         Button btnRecord = (Button) rootView.findViewById(R.id.btn_record);
         Button btnStop = (Button) rootView.findViewById(R.id.btn_stop);
-        sourceSpinner = (Spinner) rootView.findViewById(R.id.source_spinner);
+        Spinner sourceSpinner = (Spinner) rootView.findViewById(R.id.source_spinner);
         ArrayAdapter<CharSequence> arrayAdapter = ArrayAdapter.createFromResource(getActivity(), R.array.sources_array,android.R.layout.simple_spinner_item);
         arrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         sourceSpinner.setAdapter(arrayAdapter);
         sourceSpinner.setOnItemSelectedListener(this);
+        meter.setScaleY(3f);
         btnRecord.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (initRecorder(MediaRecorder.AudioSource.MIC)) {
+                if (isInitialized) {
                     record.startRecording();
                     isRecording = true;
                     new Thread(new Runnable() {
@@ -73,7 +74,7 @@ public class MicVolumeFragment extends Fragment implements AdapterView.OnItemSel
                                     final double amplitude = sum / readSize;
                                     value = (int) amplitude;
                                 }
-                                handler.postDelayed(update, 2000);
+                                handler.postDelayed(update, 1000);
                             }
                         }
                     }).start();
@@ -113,9 +114,9 @@ public class MicVolumeFragment extends Fragment implements AdapterView.OnItemSel
     @Override
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
         if(position == 1) {
-            initRecorder(MediaRecorder.AudioSource.MIC);
+            isInitialized = initRecorder(MediaRecorder.AudioSource.MIC);
         } else {
-            initRecorder(MediaRecorder.AudioSource.CAMCORDER);
+            isInitialized = initRecorder(MediaRecorder.AudioSource.CAMCORDER);
         }
     }
 
