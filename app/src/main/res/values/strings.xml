@@ -10,8 +10,9 @@
     <string name="end_label">End:</string>
     <string name="progress_dialog_loading">Loading...</string>
     <string name="time_seconds">seconds</string>
-    <string name="btn_record">Record</string>
+    <string name="btn_check_volume">Check volume</string>
     <string name="btn_stop">Stop</string>
+    <string name="btn_record">Record</string>
     <string-array name="sources_array">
         <item>UpperMic</item>
         <item>LowerMic</item>
