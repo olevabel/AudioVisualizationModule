@@ -36,7 +36,6 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 import example.audiovisualization.R;
-import example.audiovisualization.app.AudioSaveListener;
 import example.audiovisualization.app.activity.AudioVisulizationActivity;
 
 /**
@@ -55,13 +54,21 @@ public class AudioRecordFragment extends Fragment implements AdapterView.OnItemS
     private static final String FILENAME = "tore";
     private static final int RECORDER_AUDIO_ENCODING = AudioFormat.ENCODING_PCM_16BIT;
     private AudioRecord record;
+    private Button btnCheckVolume;
+    private Button btnRecord;
+    private Button btnStop;
+    private RadioButton radioButtonMp4;
+    private RadioButton radioButtonWav;
+    private RadioButton radioButtonAutomaticVolume;
+    private RadioButton radioButtonManualVolume;
+    private SeekBar volumeChangeSeekBar;
     private boolean isRecording;
     private boolean isInitialized;
     private int source;
     private ProgressBar meter;
     private int bufferSize;
     private int volumeSeek;
-    private double volumeMultiplier;
+    private double volumeMultiplier = 1;
     private short[] buffer = new short[2048];
     private int value = 0;
     private Handler handler = new Handler(Looper.getMainLooper());
@@ -74,20 +81,20 @@ public class AudioRecordFragment extends Fragment implements AdapterView.OnItemS
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_voice_meter, container, false);
         meter = (ProgressBar) rootView.findViewById(R.id.sound_meter);
-        Button btnCheckVolume = (Button) rootView.findViewById(R.id.btn_check_volume);
-        Button btnRecord = (Button) rootView.findViewById(R.id.btn_record);
-        Button btnStop = (Button) rootView.findViewById(R.id.btn_stop);
-        final RadioButton btnMp4 = (RadioButton) rootView.findViewById(R.id.format_mp4);
-        final RadioButton btnWav = (RadioButton) rootView.findViewById(R.id.format_wav);
-        final  RadioButton btnAutomaticVolume = (RadioButton) rootView.findViewById(R.id.audio_volume_type_automatic);
-        final  RadioButton btnManualVolume = (RadioButton) rootView.findViewById(R.id.audio_volume_type_manual);
+        btnCheckVolume = (Button) rootView.findViewById(R.id.btn_check_volume);
+        btnRecord = (Button) rootView.findViewById(R.id.btn_record);
+        btnStop = (Button) rootView.findViewById(R.id.btn_stop);
+        radioButtonMp4 = (RadioButton) rootView.findViewById(R.id.format_mp4);
+        radioButtonWav = (RadioButton) rootView.findViewById(R.id.format_wav);
+        radioButtonAutomaticVolume = (RadioButton) rootView.findViewById(R.id.audio_volume_type_automatic);
+        radioButtonManualVolume = (RadioButton) rootView.findViewById(R.id.audio_volume_type_manual);
 
-        final SeekBar volumeChangeSeekBar = (SeekBar) rootView.findViewById(R.id.seekbar_volume_change);
+        volumeChangeSeekBar = (SeekBar) rootView.findViewById(R.id.seekbar_volume_change);
         volumeChangeSeekBar.setEnabled(false);
-        btnManualVolume.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+        radioButtonManualVolume.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                    volumeChangeSeekBar.setEnabled(isChecked);
+                volumeChangeSeekBar.setEnabled(isChecked);
             }
         });
         volumeChangeSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
@@ -117,10 +124,9 @@ public class AudioRecordFragment extends Fragment implements AdapterView.OnItemS
         btnCheckVolume.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (record == null) {
-                    initRecorder(source);
-                }
+                initRecorder(source);
                 if (isInitialized) {
+                    btnCheckVolume.setEnabled(false);
                     record.startRecording();
                     isRecording = true;
                     isVolumeChecking = true;
@@ -128,7 +134,7 @@ public class AudioRecordFragment extends Fragment implements AdapterView.OnItemS
                         @Override
                         public void run() {
 
-                            while (isRecording) {
+                            while (isRecording && record != null) {
                                 double sum = 0;
                                 int readSize = record.read(buffer, 0, buffer.length);
                                 for (int i = 0; i < readSize; i++) {
@@ -149,16 +155,23 @@ public class AudioRecordFragment extends Fragment implements AdapterView.OnItemS
         btnRecord.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (record == null) {
+                if (record != null && record.getState() == AudioRecord.STATE_INITIALIZED) {
+                    record.release();
+                    initRecorder(source);
+                } else {
                     initRecorder(source);
                 }
                 if (isInitialized) {
+                    btnRecord.setEnabled(false);
+                    btnStop.setEnabled(true);
+                    btnCheckVolume.setEnabled(true);
                     record.startRecording();
                     isRecording = true;
+                    isVolumeChecking = false;
                     recordingThread = new Thread(new Runnable() {
                         @Override
                         public void run() {
-                            if (btnMp4.isChecked()) {
+                            if (radioButtonMp4.isChecked()) {
                                 try {
                                     writeAudioDataToFile(true);
                                 } catch (IOException e1) {
@@ -177,14 +190,17 @@ public class AudioRecordFragment extends Fragment implements AdapterView.OnItemS
                     recordingThread.start();
                 }
             }
+
         });
         btnStop.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                meter.setProgress(0);
+                btnStop.setEnabled(false);
+                btnRecord.setEnabled(true);
                 if (record != null) {
                     isRecording = false;
-                    isInitialized = false;
-                    if (record.getState() == 1) {
+                    if (record.getState() == AudioRecord.STATE_INITIALIZED) {
                         record.stop();
                         record.release();
                     }
@@ -192,7 +208,7 @@ public class AudioRecordFragment extends Fragment implements AdapterView.OnItemS
                     recordingThread = null;
                     if (!isVolumeChecking) {
                         try {
-                            if (btnWav.isChecked()) {
+                            if (radioButtonWav.isChecked()) {
                                 rawToWave(new File(setupFileName(true, false)), new File(setupFileName(false, false)));
                             }
                         } catch (IOException e) {
@@ -243,7 +259,7 @@ public class AudioRecordFragment extends Fragment implements AdapterView.OnItemS
                     if (read != AudioRecord.ERROR_INVALID_OPERATION) {
                         try {
                             byte[] copyData = new byte[data.length];
-                            for(int i = 0; i < data.length; i++) {
+                            for (int i = 0; i < data.length; i++) {
                                 byte b = (byte) Math.min(data[i] * volumeMultiplier, 255);
                                 copyData[i] = b;
                             }
@@ -255,14 +271,11 @@ public class AudioRecordFragment extends Fragment implements AdapterView.OnItemS
                 }
             }
             if (isMp4) {
-                try {
-                    muxer.stop();
-                    muxer.release();
-                    out.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                muxer.stop();
+                muxer.release();
+
             }
+            out.close();
         }
     }
 
@@ -273,7 +286,12 @@ public class AudioRecordFragment extends Fragment implements AdapterView.OnItemS
 
     private boolean initRecorder(int source) {
         record = new AudioRecord(source, RECORDER_SAMPLE_RATE, RECORDER_CHANNELS, RECORDER_AUDIO_ENCODING, bufferSize);
-        return record.getState() == AudioRecord.STATE_INITIALIZED;
+        int state = record.getState();
+        if (state == AudioRecord.STATE_INITIALIZED) {
+            isInitialized = true;
+            return true;
+        }
+        return false;
     }
 
     private Runnable update = new Runnable() {
