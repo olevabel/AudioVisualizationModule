@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package myown.soundwavetest.waveform.view;
+package example.audiovisualization.app.view;
 
 import android.content.Context;
 import android.graphics.Canvas;

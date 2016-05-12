@@ -12,18 +12,21 @@
             android:paddingTop="40dip">
 
 
-        <myown.soundwavetest.waveform.view.WaveformView android:id="@+id/waveform"
+        <example.audiovisualization.app.view.WaveformView
+            android:id="@+id/waveform"
                                              android:layout_width="fill_parent"
                                              android:layout_height="fill_parent" />
 
-        <myown.soundwavetest.waveform.view.MarkerView android:id="@+id/startmarker"
+        <example.audiovisualization.app.view.MarkerView
+            android:id="@+id/startmarker"
                                              android:nextFocusDown="@+id/endmarker"
                                              android:layout_width="wrap_content"
                                              android:layout_height="wrap_content"
                                              android:src="@drawable/marker_left"
                                              android:contentDescription="@string/start_marker" />
 
-        <myown.soundwavetest.waveform.view.MarkerView android:id="@+id/endmarker"
+        <example.audiovisualization.app.view.MarkerView
+            android:id="@+id/endmarker"
                                              android:nextFocusUp="@+id/startmarker"
                                              android:nextFocusDown="@+id/info"
                                              android:layout_width="wrap_content"

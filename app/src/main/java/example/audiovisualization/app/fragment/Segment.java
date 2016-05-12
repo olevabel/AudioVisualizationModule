@@ -1,4 +1,4 @@
-package myown.soundwavetest.waveform;
+package example.audiovisualization.app.fragment;
 
 public class Segment {
     private final Double start;

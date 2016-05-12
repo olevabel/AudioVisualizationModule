@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package myown.soundwavetest.waveform.soundfile;
+package example.audiovisualization.app.soundfile;
 
 import android.util.Log;
 

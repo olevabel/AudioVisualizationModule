@@ -11,4 +11,5 @@
     <color name="grid_line">#6D6D6D</color>
     <color name="timecode">#000000</color>
     <color name="timecode_shadow">#aa000000</color>
+    <color name="background_generic_1">#FFFFFF</color>
 </resources>

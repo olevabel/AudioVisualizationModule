@@ -1,13 +1,16 @@
-package myown.soundwavetest.waveform;
+package example.audiovisualization.app.fragment;
 
+import android.content.Intent;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
+import android.media.MediaCodec;
+import android.media.MediaFormat;
+import android.media.MediaMuxer;
 import android.media.MediaRecorder;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
-import android.os.SystemClock;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
@@ -17,6 +20,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ProgressBar;
+import android.widget.RadioButton;
 import android.widget.SeekBar;
 import android.widget.Spinner;
 
@@ -30,19 +34,24 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
-import myown.soundwavetest.R;
+import example.audiovisualization.R;
+import example.audiovisualization.app.AudioSaveListener;
+import example.audiovisualization.app.activity.AudioVisulizationActivity;
 
 /**
  * Created by olevabel on 28/02/16.
  */
-public class MicVolumeFragment extends Fragment implements AdapterView.OnItemSelectedListener {
+public class AudioRecordFragment extends Fragment implements AdapterView.OnItemSelectedListener {
 
     private static final int RECORDER_BPP = 16;
     private static final int RECORDER_SAMPLE_RATE = 44100;
     private static final int RECORDER_CHANNELS = AudioFormat.CHANNEL_IN_MONO;
     private static final String TEMP_FILE = "record_temp.raw";
-    private static final String EXT = ".wav";
+    private static final String WAV_EXT = ".wav";
+    private static final String MP4_EXT = ".mp4";
+    private static final String MIME_TYPE_MP4 = "audio/mp4a-latm";
     private static final String DIR_NAME = "AudioRecordModule";
+    private static final String FILENAME = "tore";
     private static final int RECORDER_AUDIO_ENCODING = AudioFormat.ENCODING_PCM_16BIT;
     private AudioRecord record;
     private boolean isRecording;
@@ -56,6 +65,7 @@ public class MicVolumeFragment extends Fragment implements AdapterView.OnItemSel
     private int value = 0;
     private Handler handler = new Handler(Looper.getMainLooper());
     private boolean isVolumeChecking;
+    private String fullFileName;
     private Thread recordingThread;
 
     @Nullable
@@ -66,6 +76,8 @@ public class MicVolumeFragment extends Fragment implements AdapterView.OnItemSel
         Button btnCheckVolume = (Button) rootView.findViewById(R.id.btn_check_volume);
         Button btnRecord = (Button) rootView.findViewById(R.id.btn_record);
         Button btnStop = (Button) rootView.findViewById(R.id.btn_stop);
+        final RadioButton btnMp4 = (RadioButton) rootView.findViewById(R.id.format_mp4);
+        final RadioButton btnWav = (RadioButton) rootView.findViewById(R.id.format_wav);
         SeekBar volumeChangeSeekBar = (SeekBar) rootView.findViewById(R.id.seekbar_volume_change);
         volumeChangeSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
@@ -135,7 +147,20 @@ public class MicVolumeFragment extends Fragment implements AdapterView.OnItemSel
                     recordingThread = new Thread(new Runnable() {
                         @Override
                         public void run() {
-                            writeAudioDataToFile();
+                            if (btnMp4.isChecked()) {
+                                try {
+                                    writeAudioDataToFile(true);
+                                } catch (IOException e1) {
+                                    e1.printStackTrace();
+                                }
+                            } else {
+                                try {
+                                    writeAudioDataToFile(false);
+                                } catch (IOException e1) {
+                                    e1.printStackTrace();
+                                }
+                            }
+
                         }
                     });
                     recordingThread.start();
@@ -156,7 +181,9 @@ public class MicVolumeFragment extends Fragment implements AdapterView.OnItemSel
                     recordingThread = null;
                     if (!isVolumeChecking) {
                         try {
-                            rawToWave(new File(setupFileName(true)), new File(setupFileName(false)));
+                            if (btnWav.isChecked()) {
+                                rawToWave(new File(setupFileName(true, false)), new File(setupFileName(false, false)));
+                            }
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
@@ -164,15 +191,30 @@ public class MicVolumeFragment extends Fragment implements AdapterView.OnItemSel
                         isVolumeChecking = false;
                     }
                 }
+                Intent intent = new Intent(getActivity(), AudioVisulizationActivity.class);
+                intent.putExtra(AudioVisulizationActivity.EXTRA_FILE_NAME, fullFileName);
+                startActivity(intent);
             }
         });
         return rootView;
     }
 
-    private void writeAudioDataToFile() {
+    private void writeAudioDataToFile(boolean isMp4) throws IOException {
         FileOutputStream out = null;
+        MediaMuxer muxer = null;
+        MediaFormat audioFormat;
+        ByteBuffer inputBuffer = null;
+        MediaCodec.BufferInfo bufferInfo = null;
+        int audioIndex = 0;
         byte data[] = new byte[bufferSize];
-        String filename = setupFileName(true);
+        if (isMp4) {
+            String filename = setupFileName(false, true);
+            muxer = new MediaMuxer(filename, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
+            audioFormat = MediaFormat.createAudioFormat(MIME_TYPE_MP4, RECORDER_SAMPLE_RATE, RECORDER_CHANNELS);
+            audioIndex = muxer.addTrack(audioFormat);
+            bufferInfo = new MediaCodec.BufferInfo();
+        }
+        String filename = setupFileName(true, false);
         try {
             out = new FileOutputStream(filename);
         } catch (FileNotFoundException e) {
@@ -182,18 +224,33 @@ public class MicVolumeFragment extends Fragment implements AdapterView.OnItemSel
         if (out != null) {
             while (isRecording) {
                 read = record.read(data, 0, bufferSize);
-                if (read != AudioRecord.ERROR_INVALID_OPERATION) {
-                    try {
-                        out.write(data);
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                inputBuffer = ByteBuffer.wrap(data);
+                if (isMp4) {
+                    muxer.start();
+                    muxer.writeSampleData(audioIndex, inputBuffer, bufferInfo);
+                } else {
+                    if (read != AudioRecord.ERROR_INVALID_OPERATION) {
+                        try {
+                            byte[] copyData = new byte[data.length];
+                            for(int i = 0; i < data.length; i++) {
+                                byte b = (byte) Math.min(data[i] * volumeMultiplier, 255);
+                                copyData[i] = b;
+                            }
+                            out.write(copyData);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
                     }
                 }
             }
-            try {
-                out.close();
-            } catch (IOException e) {
-                e.printStackTrace();
+            if (isMp4) {
+                try {
+                    muxer.stop();
+                    muxer.release();
+                    out.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         }
     }
@@ -233,7 +290,7 @@ public class MicVolumeFragment extends Fragment implements AdapterView.OnItemSel
 
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
-    private String setupFileName(boolean isTemp) {
+    private String setupFileName(boolean isTemp, boolean isMp4) {
         String path = Environment.getExternalStorageDirectory().getPath();
         File directory = new File(path, DIR_NAME);
         if (!directory.exists()) {
@@ -246,26 +303,14 @@ public class MicVolumeFragment extends Fragment implements AdapterView.OnItemSel
             }
             return directory.getAbsolutePath() + "/" + TEMP_FILE;
         }
-        return directory.getAbsolutePath() + "/" + "hullult äge" + EXT;
-    }
-
-    private void writeInt(final DataOutputStream output, final int value) throws IOException {
-        output.write(value >> 0);
-        output.write(value >> 8);
-        output.write(value >> 16);
-        output.write(value >> 24);
-    }
-
-    private void writeShort(final DataOutputStream output, final short value) throws IOException {
-        output.write(value >> 0);
-        output.write(value >> 8);
-    }
-
-    private void writeString(final DataOutputStream output, final String value) throws IOException {
-        for (int i = 0; i < value.length(); i++) {
-            output.write(value.charAt(i));
+        if (isMp4) {
+            fullFileName = directory.getAbsolutePath() + "/" + FILENAME + MP4_EXT;
+            return fullFileName;
         }
+        fullFileName = directory.getAbsolutePath() + "/" + FILENAME + WAV_EXT;
+        return fullFileName;
     }
+
 
     private void rawToWave(final File rawFile, final File waveFile) throws IOException {
 
@@ -279,38 +324,6 @@ public class MicVolumeFragment extends Fragment implements AdapterView.OnItemSel
                 input.close();
             }
         }
-
-        DataOutputStream output = null;
-        try {
-            output = new DataOutputStream(new FileOutputStream(waveFile));
-            // WAVE header
-            // see http://ccrma.stanford.edu/courses/422/projects/WaveFormat/
-            writeString(output, "RIFF"); // chunk id
-            writeInt(output, 36 + rawData.length); // chunk size
-            writeString(output, "WAVE"); // format
-            writeString(output, "fmt "); // subchunk 1 id
-            writeInt(output, 16); // subchunk 1 size
-            writeShort(output, (short) 1); // audio format (1 = PCM)
-            writeShort(output, (short) 1); // number of channels
-            writeInt(output, RECORDER_SAMPLE_RATE); // sample rate
-            writeInt(output, RECORDER_SAMPLE_RATE * 2); // byte rate
-            writeShort(output, (short) 2); // block align
-            writeShort(output, (short) 16); // bits per sample
-            writeString(output, "data"); // subchunk 2 id
-            writeInt(output, rawData.length); // subchunk 2 size
-            // Audio data (conversion big endian -> little endian)
-            short[] shorts = new short[rawData.length / 2];
-            ByteBuffer.wrap(rawData).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer().get(shorts);
-            ByteBuffer bytes = ByteBuffer.allocate(shorts.length * 2);
-            for (short s : shorts) {
-                bytes.putShort(s);
-            }
-            output.write(bytes.array());
-        } finally {
-            if (output != null) {
-                output.close();
-            }
-        }
         try {
             DataOutputStream outFile = new DataOutputStream(new FileOutputStream(waveFile));
 
@@ -322,10 +335,10 @@ public class MicVolumeFragment extends Fragment implements AdapterView.OnItemSel
             outFile.write(intToByteArray((int) 16), 0, 4);    // 16 - size of this chunk
             outFile.write(shortToByteArray((short) 1), 0, 2);        // 20 - what is the audio format? 1 for PCM = Pulse Code Modulation
             outFile.write(shortToByteArray((short) 1), 0, 2);    // 22 - mono or stereo? 1 or 2?  (or 5 or ???)
-            outFile.write(intToByteArray((int) 44100), 0, 4);        // 24 - samples per second (numbers per second)
-            outFile.write(intToByteArray((int) 44100 * 2), 0, 4);        // 28 - bytes per second
+            outFile.write(intToByteArray((int) RECORDER_SAMPLE_RATE), 0, 4);        // 24 - samples per second (numbers per second)
+            outFile.write(intToByteArray((int) RECORDER_SAMPLE_RATE * RECORDER_CHANNELS / Byte.SIZE), 0, 4);        // 28 - bytes per second
             outFile.write(shortToByteArray((short) 2), 0, 2);    // 32 - # of bytes in one sample, for all channels
-            outFile.write(shortToByteArray((short) 16), 0, 2);    // 34 - how many bits in a sample(number)?  usually 16 or 24
+            outFile.write(shortToByteArray((short) RECORDER_BPP), 0, 2);    // 34 - how many bits in a sample(number)?  usually 16 or 24
             outFile.writeBytes("data");                    // 36 - data
             outFile.write(intToByteArray((int) rawData.length), 0, 4);        // 40 - how big is this data chunk
             outFile.write(rawData);                        // 44 - the actual data itself - just a long string of numbers
@@ -334,19 +347,13 @@ public class MicVolumeFragment extends Fragment implements AdapterView.OnItemSel
         }
 
     }
-    private static byte[] intToByteArray(int i)
-    {
-        byte[] b = new byte[4];
-        b[0] = (byte) (i & 0x00FF);
-        b[1] = (byte) ((i >> 8) & 0x000000FF);
-        b[2] = (byte) ((i >> 16) & 0x000000FF);
-        b[3] = (byte) ((i >> 24) & 0x000000FF);
-        return b;
+
+    private static byte[] intToByteArray(int i) {
+        return ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt(i).array();
     }
 
     // convert a short to a byte array
-    public static byte[] shortToByteArray(short data)
-    {
-        return new byte[]{(byte)(data & 0xff),(byte)((data >>> 8) & 0xff)};
+    public static byte[] shortToByteArray(short data) {
+        return ByteBuffer.allocate(2).order(ByteOrder.LITTLE_ENDIAN).putShort(data).array();
     }
 }

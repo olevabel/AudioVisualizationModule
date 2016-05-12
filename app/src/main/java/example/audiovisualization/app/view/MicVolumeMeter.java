@@ -1,4 +1,4 @@
-package myown.soundwavetest.waveform.view;
+package example.audiovisualization.app.view;
 
 import android.content.Context;
 import android.graphics.Canvas;
@@ -8,8 +8,6 @@ import android.graphics.drawable.ShapeDrawable;
 import android.media.MediaRecorder;
 import android.util.AttributeSet;
 import android.view.View;
-
-import java.io.IOException;
 
 /**
  * Created by Olev on 19/02/2016.

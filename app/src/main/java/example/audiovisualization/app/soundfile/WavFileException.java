@@ -1,4 +1,4 @@
-package myown.soundwavetest.waveform.soundfile;
+package example.audiovisualization.app.soundfile;
 
 /**
  * @author Anna Stępień <anna.stepien@semantive.com>

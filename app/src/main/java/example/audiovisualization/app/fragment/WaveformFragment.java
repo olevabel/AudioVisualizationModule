@@ -1,4 +1,4 @@
-package myown.soundwavetest.waveform;
+package example.audiovisualization.app.fragment;
 
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
@@ -26,10 +26,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.util.List;
 
-import myown.soundwavetest.R;
-import myown.soundwavetest.waveform.soundfile.CheapSoundFile;
-import myown.soundwavetest.waveform.view.MarkerView;
-import myown.soundwavetest.waveform.view.WaveformView;
+import example.audiovisualization.R;
+import example.audiovisualization.app.soundfile.CheapSoundFile;
+import example.audiovisualization.app.view.MarkerView;
+import example.audiovisualization.app.view.WaveformView;
 
 /*
  * Copyright (C) 2008 Google Inc.

@@ -1,4 +1,4 @@
-package myown.soundwavetest.waveform.view;
+package example.audiovisualization.app.view;
 
 /*
  * Copyright (C) 2008 Google Inc.
@@ -31,9 +31,9 @@ import java.util.List;
 import java.util.NavigableMap;
 import java.util.TreeMap;
 
-import myown.soundwavetest.R;
-import myown.soundwavetest.waveform.Segment;
-import myown.soundwavetest.waveform.soundfile.CheapSoundFile;
+import example.audiovisualization.R;
+import example.audiovisualization.app.fragment.Segment;
+import example.audiovisualization.app.soundfile.CheapSoundFile;
 
 /**
  * WaveformView is an Android view that displays a visual representation

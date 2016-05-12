@@ -1,4 +1,4 @@
-package myown.soundwavetest;
+package example.audiovisualization;
 
 import org.junit.Test;
 
