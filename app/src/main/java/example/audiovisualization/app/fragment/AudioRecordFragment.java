@@ -1,9 +1,11 @@
 package example.audiovisualization.app.fragment;
 
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaCodec;
+import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.MediaMuxer;
 import android.media.MediaRecorder;
@@ -13,6 +15,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -25,6 +28,13 @@ import android.widget.RadioButton;
 import android.widget.SeekBar;
 import android.widget.Spinner;
 
+import com.github.hiteshsondhi88.libffmpeg.ExecuteBinaryResponseHandler;
+import com.github.hiteshsondhi88.libffmpeg.FFmpeg;
+import com.github.hiteshsondhi88.libffmpeg.FFmpegExecuteResponseHandler;
+import com.github.hiteshsondhi88.libffmpeg.FFmpegLoadBinaryResponseHandler;
+import com.github.hiteshsondhi88.libffmpeg.exceptions.FFmpegCommandAlreadyRunningException;
+import com.github.hiteshsondhi88.libffmpeg.exceptions.FFmpegNotSupportedException;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -36,6 +46,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 import example.audiovisualization.R;
+import example.audiovisualization.app.FileConvertListener;
 import example.audiovisualization.app.activity.AudioVisulizationActivity;
 
 /**
@@ -48,7 +59,7 @@ public class AudioRecordFragment extends Fragment implements AdapterView.OnItemS
     private static final int RECORDER_CHANNELS = AudioFormat.CHANNEL_IN_MONO;
     private static final String TEMP_FILE = "record_temp.raw";
     private static final String WAV_EXT = ".wav";
-    private static final String MP4_EXT = ".mp4";
+    private static final String MP4_EXT = ".m4a";
     private static final String MIME_TYPE_MP4 = "audio/mp4a-latm";
     private static final String DIR_NAME = "AudioRecordModule";
     private static final String FILENAME = "tore";
@@ -75,11 +86,13 @@ public class AudioRecordFragment extends Fragment implements AdapterView.OnItemS
     private boolean isVolumeChecking;
     private String fullFileName;
     private Thread recordingThread;
+    private FFmpeg ffmpeg;
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_voice_meter, container, false);
+        initFFmpeg();
         meter = (ProgressBar) rootView.findViewById(R.id.sound_meter);
         btnCheckVolume = (Button) rootView.findViewById(R.id.btn_check_volume);
         btnRecord = (Button) rootView.findViewById(R.id.btn_record);
@@ -88,7 +101,6 @@ public class AudioRecordFragment extends Fragment implements AdapterView.OnItemS
         radioButtonWav = (RadioButton) rootView.findViewById(R.id.format_wav);
         radioButtonAutomaticVolume = (RadioButton) rootView.findViewById(R.id.audio_volume_type_automatic);
         radioButtonManualVolume = (RadioButton) rootView.findViewById(R.id.audio_volume_type_manual);
-
         volumeChangeSeekBar = (SeekBar) rootView.findViewById(R.id.seekbar_volume_change);
         volumeChangeSeekBar.setEnabled(false);
         radioButtonManualVolume.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -171,20 +183,11 @@ public class AudioRecordFragment extends Fragment implements AdapterView.OnItemS
                     recordingThread = new Thread(new Runnable() {
                         @Override
                         public void run() {
-                            if (radioButtonMp4.isChecked()) {
-                                try {
-                                    writeAudioDataToFile(true);
-                                } catch (IOException e1) {
-                                    e1.printStackTrace();
-                                }
-                            } else {
-                                try {
-                                    writeAudioDataToFile(false);
-                                } catch (IOException e1) {
-                                    e1.printStackTrace();
-                                }
+                            try {
+                                writeAudioDataToFile();
+                            } catch (IOException e1) {
+                                e1.printStackTrace();
                             }
-
                         }
                     });
                     recordingThread.start();
@@ -210,6 +213,15 @@ public class AudioRecordFragment extends Fragment implements AdapterView.OnItemS
                         try {
                             if (radioButtonWav.isChecked()) {
                                 rawToWave(new File(setupFileName(true, false)), new File(setupFileName(false, false)));
+                            } else if (radioButtonMp4.isChecked()) {
+                                rawToMp4(new File(setupFileName(true, true)), new File(setupFileName(false, true)), new FileConvertListener() {
+                                    @Override
+                                    public void onFileConverted() {
+                                        Intent intent = new Intent(getActivity(), AudioVisulizationActivity.class);
+                                        intent.putExtra(AudioVisulizationActivity.EXTRA_FILE_NAME, fullFileName);
+                                        startActivity(intent);
+                                    }
+                                });
                             }
                         } catch (IOException e) {
                             e.printStackTrace();
@@ -218,29 +230,43 @@ public class AudioRecordFragment extends Fragment implements AdapterView.OnItemS
                         isVolumeChecking = false;
                     }
                 }
-                Intent intent = new Intent(getActivity(), AudioVisulizationActivity.class);
-                intent.putExtra(AudioVisulizationActivity.EXTRA_FILE_NAME, fullFileName);
-                startActivity(intent);
             }
         });
         return rootView;
     }
 
-    private void writeAudioDataToFile(boolean isMp4) throws IOException {
-        FileOutputStream out = null;
-        MediaMuxer muxer = null;
-        MediaFormat audioFormat;
-        ByteBuffer inputBuffer = null;
-        MediaCodec.BufferInfo bufferInfo = null;
-        int audioIndex = 0;
-        byte data[] = new byte[bufferSize];
-        if (isMp4) {
-            String filename = setupFileName(false, true);
-            muxer = new MediaMuxer(filename, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
-            audioFormat = MediaFormat.createAudioFormat(MIME_TYPE_MP4, RECORDER_SAMPLE_RATE, RECORDER_CHANNELS);
-            audioIndex = muxer.addTrack(audioFormat);
-            bufferInfo = new MediaCodec.BufferInfo();
+    private void initFFmpeg() {
+        ffmpeg = FFmpeg.getInstance(getActivity());
+        try {
+            ffmpeg.loadBinary(new FFmpegLoadBinaryResponseHandler() {
+                @Override
+                public void onFailure() {
+
+                }
+
+                @Override
+                public void onSuccess() {
+
+                }
+
+                @Override
+                public void onStart() {
+
+                }
+
+                @Override
+                public void onFinish() {
+
+                }
+            });
+        } catch (FFmpegNotSupportedException e) {
+            e.printStackTrace();
         }
+    }
+
+    private void writeAudioDataToFile() throws IOException {
+        FileOutputStream out = null;
+        byte data[] = new byte[bufferSize];
         String filename = setupFileName(true, false);
         try {
             out = new FileOutputStream(filename);
@@ -251,28 +277,18 @@ public class AudioRecordFragment extends Fragment implements AdapterView.OnItemS
         if (out != null) {
             while (isRecording) {
                 read = record.read(data, 0, bufferSize);
-                inputBuffer = ByteBuffer.wrap(data);
-                if (isMp4) {
-                    muxer.start();
-                    muxer.writeSampleData(audioIndex, inputBuffer, bufferInfo);
-                } else {
-                    if (read != AudioRecord.ERROR_INVALID_OPERATION) {
-                        try {
-                            byte[] copyData = new byte[data.length];
-                            for (int i = 0; i < data.length; i++) {
-                                byte b = (byte) Math.min(data[i] * volumeMultiplier, 255);
-                                copyData[i] = b;
-                            }
-                            out.write(copyData);
-                        } catch (IOException e) {
-                            e.printStackTrace();
+                if (read != AudioRecord.ERROR_INVALID_OPERATION) {
+                    try {
+                        byte[] copyData = new byte[data.length];
+                        for (int i = 0; i < data.length; i++) {
+                            byte b = (byte) Math.min(data[i] * volumeMultiplier, 255);
+                            copyData[i] = b;
                         }
+                        out.write(copyData);
+                    } catch (IOException e) {
+                        e.printStackTrace();
                     }
                 }
-            }
-            if (isMp4) {
-                muxer.stop();
-                muxer.release();
 
             }
             out.close();
@@ -333,8 +349,16 @@ public class AudioRecordFragment extends Fragment implements AdapterView.OnItemS
             return directory.getAbsolutePath() + "/" + TEMP_FILE;
         }
         if (isMp4) {
+            File mp4File = new File(directory.getAbsolutePath() + "/" + FILENAME + MP4_EXT);
+            if(mp4File.exists()) {
+                mp4File.delete();
+            }
             fullFileName = directory.getAbsolutePath() + "/" + FILENAME + MP4_EXT;
             return fullFileName;
+        }
+        File wavFile = new File(directory.getAbsolutePath() + "/" + FILENAME + WAV_EXT);
+        if(wavFile.exists()) {
+            wavFile.delete();
         }
         fullFileName = directory.getAbsolutePath() + "/" + FILENAME + WAV_EXT;
         return fullFileName;
@@ -371,11 +395,55 @@ public class AudioRecordFragment extends Fragment implements AdapterView.OnItemS
             outFile.writeBytes("data");                    // 36 - data
             outFile.write(intToByteArray((int) rawData.length), 0, 4);        // 40 - how big is this data chunk
             outFile.write(rawData);                        // 44 - the actual data itself - just a long string of numbers
+            outFile.close();
+            rawFile.delete();
         } catch (Exception e) {
             System.out.println(e.getMessage());
         }
 
+
     }
+
+    private void rawToMp4(final File rawFile, File mp4File, final FileConvertListener listener) {
+        final ProgressDialog progressDialog = new ProgressDialog(getActivity());
+        progressDialog.setMessage(getActivity().getString(R.string.progress_dialog_loading));
+        progressDialog.show();
+        String[] cmd = new String[]{"-f", "s16le", "-ar", "44100", "-ac", "1", "-i", rawFile.getAbsolutePath(),  mp4File.getAbsolutePath()};
+        try {
+            ffmpeg.execute(cmd, new FFmpegExecuteResponseHandler() {
+                @Override
+                public void onSuccess(String message) {
+                    Log.d("success", message);
+                    rawFile.delete();
+                    progressDialog.dismiss();
+                    listener.onFileConverted();
+                }
+
+                @Override
+                public void onProgress(String message) {
+                    Log.d("in progress", message);
+                }
+
+                @Override
+                public void onFailure(String message) {
+                    Log.d("failure", message);
+                }
+
+                @Override
+                public void onStart() {
+                    Log.d("start", "start converting");
+                }
+
+                @Override
+                public void onFinish() {
+                    Log.d("finish", "finished converting");
+                }
+            });
+        } catch (FFmpegCommandAlreadyRunningException e) {
+            e.printStackTrace();
+        }
+    }
+
 
     private static byte[] intToByteArray(int i) {
         return ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt(i).array();

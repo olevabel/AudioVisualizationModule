@@ -178,7 +178,7 @@ public class CheapAAC extends CheapSoundFile {
         // No need to handle filesizes larger than can fit in a 32-bit int
         mFileSize = (int)mInputFile.length();
 
-        if (mFileSize < 128) {
+        if (mFileSize < 4) {
             throw new java.io.IOException("File too small to parse");
         }
 
