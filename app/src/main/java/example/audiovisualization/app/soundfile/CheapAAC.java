@@ -45,7 +45,7 @@ public class CheapAAC extends CheapSoundFile {
         public int start;
         public int len;  // including header
         public byte[] data;
-    };
+    }
 
     public static final int kDINF = 0x64696e66;
     public static final int kFTYP = 0x66747970;
@@ -319,7 +319,7 @@ public class CheapAAC extends CheapSoundFile {
         mOffset += 4 * mNumFrames;
         for (int i = 0; i < mNumFrames; i++) {
             mFrameLens[i] =
-                ((0xff & frameLenBytes[4 * i + 0]) << 24) |
+                ((0xff & frameLenBytes[4 * i]) << 24) |
                 ((0xff & frameLenBytes[4 * i + 1]) << 16) |
                 ((0xff & frameLenBytes[4 * i + 2]) << 8) |
                 ((0xff & frameLenBytes[4 * i + 3]));

@@ -48,8 +48,8 @@ public class CheapSoundFile {
     }
 
     public interface Factory {
-        public CheapSoundFile create();
-        public String[] getSupportedExtensions();
+        CheapSoundFile create();
+        String[] getSupportedExtensions();
     }
 
     static Factory[] sSubclassFactories = new Factory[] {

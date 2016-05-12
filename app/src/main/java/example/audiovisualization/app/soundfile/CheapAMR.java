@@ -254,7 +254,7 @@ public class CheapAMR extends CheapSoundFile {
             mBitRate = 5;
             gain = new int[4];
             gain[0] =
-                0x01 * bits[28] +
+                    bits[28] +
                 0x02 * bits[29] +
                 0x04 * bits[30] +
                 0x08 * bits[31] +
@@ -264,7 +264,7 @@ public class CheapAMR extends CheapSoundFile {
 		0x80 * bits[49];
             gain[1] = gain[0];
             gain[2] =
-                0x01 * bits[32] +
+                    bits[32] +
                 0x02 * bits[33] +
                 0x04 * bits[34] +
                 0x08 * bits[35] +
@@ -310,28 +310,28 @@ public class CheapAMR extends CheapSoundFile {
             mBitRate = 5;
             gain = new int[4];
             gain[0] =
-                0x01 * bits[24] +
+                    bits[24] +
                 0x02 * bits[25] +
                 0x04 * bits[26] +
                 0x08 * bits[36] +
                 0x10 * bits[45] +
                 0x20 * bits[55];
             gain[1] =
-                0x01 * bits[27] +
+                    bits[27] +
                 0x02 * bits[28] +
                 0x04 * bits[29] +
                 0x08 * bits[37] +
                 0x10 * bits[46] +
                 0x20 * bits[56];
             gain[2] =
-                0x01 * bits[30] +
+                    bits[30] +
                 0x02 * bits[31] +
                 0x04 * bits[32] +
                 0x08 * bits[38] +
                 0x10 * bits[47] +
                 0x20 * bits[57];
             gain[3] =
-                0x01 * bits[33] +
+                    bits[33] +
                 0x02 * bits[34] +
                 0x04 * bits[35] +
                 0x08 * bits[39] +
@@ -526,7 +526,7 @@ public class CheapAMR extends CheapSoundFile {
                         int[] fixedGain,
                         int[][] pulse) {
         adaptiveIndex[0] =
-            0x01 * bits[45] +
+                bits[45] +
             0x02 * bits[43] +
             0x04 * bits[41] +
             0x08 * bits[39] +
@@ -536,14 +536,14 @@ public class CheapAMR extends CheapSoundFile {
             0x80 * bits[31] +
             0x100 * bits[29];
         adaptiveIndex[1] =
-            0x01 * bits[242] +
+                bits[242] +
             0x02 * bits[79] +
             0x04 * bits[77] +
             0x08 * bits[75] +
             0x10 * bits[73] +
             0x20 * bits[71];
         adaptiveIndex[2] =
-            0x01 * bits[46] +
+                bits[46] +
             0x02 * bits[44] +
             0x04 * bits[42] +
             0x08 * bits[40] +
@@ -553,7 +553,7 @@ public class CheapAMR extends CheapSoundFile {
             0x80 * bits[32] +
             0x100 * bits[30];
         adaptiveIndex[3] =
-            0x01 * bits[243] +
+                bits[243] +
             0x02 * bits[80] +
             0x04 * bits[78] +
             0x08 * bits[76] +
@@ -561,229 +561,229 @@ public class CheapAMR extends CheapSoundFile {
             0x20 * bits[72];
 
         adaptiveGain[0] =
-            0x01 * bits[88] +
+                bits[88] +
             0x02 * bits[55] +
             0x04 * bits[51] +
             0x08 * bits[47];
         adaptiveGain[1] =
-            0x01 * bits[89] +
+                bits[89] +
             0x02 * bits[56] +
             0x04 * bits[52] +
             0x08 * bits[48];
         adaptiveGain[2] =
-            0x01 * bits[90] +
+                bits[90] +
             0x02 * bits[57] +
             0x04 * bits[53] +
             0x08 * bits[49];
         adaptiveGain[3] =
-            0x01 * bits[91] +
+                bits[91] +
             0x02 * bits[58] +
             0x04 * bits[54] +
             0x08 * bits[50];
 
         fixedGain[0] =
-            0x01 * bits[104] +
+                bits[104] +
             0x02 * bits[92] +
             0x04 * bits[67] +
             0x08 * bits[63] +
             0x10 * bits[59];
         fixedGain[1] =
-            0x01 * bits[105] +
+                bits[105] +
             0x02 * bits[93] +
             0x04 * bits[68] +
             0x08 * bits[64] +
             0x10 * bits[60];
         fixedGain[2] =
-            0x01 * bits[106] +
+                bits[106] +
             0x02 * bits[94] +
             0x04 * bits[69] +
             0x08 * bits[65] +
             0x10 * bits[61];
         fixedGain[3] =
-            0x01 * bits[107] +
+                bits[107] +
             0x02 * bits[95] +
             0x04 * bits[70] +
             0x08 * bits[66] +
             0x10 * bits[62];
 
         pulse[0][0] =
-            0x01 * bits[122] +
+                bits[122] +
             0x02 * bits[123] +
             0x04 * bits[124] +
             0x08 * bits[96];
         pulse[0][1] =
-            0x01 * bits[125] +
+                bits[125] +
             0x02 * bits[126] +
             0x04 * bits[127] +
             0x08 * bits[100];
         pulse[0][2] =
-            0x01 * bits[128] +
+                bits[128] +
             0x02 * bits[129] +
             0x04 * bits[130] +
             0x08 * bits[108];
         pulse[0][3] =
-            0x01 * bits[131] +
+                bits[131] +
             0x02 * bits[132] +
             0x04 * bits[133] +
             0x08 * bits[112];
         pulse[0][4] =
-            0x01 * bits[134] +
+                bits[134] +
             0x02 * bits[135] +
             0x04 * bits[136] +
             0x08 * bits[116];
         pulse[0][5] =
-            0x01 * bits[182] +
+                bits[182] +
             0x02 * bits[183] +
             0x04 * bits[184];
         pulse[0][6] =
-            0x01 * bits[185] +
+                bits[185] +
             0x02 * bits[186] +
             0x04 * bits[187];
         pulse[0][7] =
-            0x01 * bits[188] +
+                bits[188] +
             0x02 * bits[189] +
             0x04 * bits[190];
         pulse[0][8] =
-            0x01 * bits[191] +
+                bits[191] +
             0x02 * bits[192] +
             0x04 * bits[193];
         pulse[0][9] =
-            0x01 * bits[194] +
+                bits[194] +
             0x02 * bits[195] +
             0x04 * bits[196];
         pulse[1][0] =
-            0x01 * bits[137] +
+                bits[137] +
             0x02 * bits[138] +
             0x04 * bits[139] +
             0x08 * bits[97];
         pulse[1][1] =
-            0x01 * bits[140] +
+                bits[140] +
             0x02 * bits[141] +
             0x04 * bits[142] +
             0x08 * bits[101];
         pulse[1][2] =
-            0x01 * bits[143] +
+                bits[143] +
             0x02 * bits[144] +
             0x04 * bits[145] +
             0x08 * bits[109];
         pulse[1][3] =
-            0x01 * bits[146] +
+                bits[146] +
             0x02 * bits[147] +
             0x04 * bits[148] +
             0x08 * bits[113];
         pulse[1][4] =
-            0x01 * bits[149] +
+                bits[149] +
             0x02 * bits[150] +
             0x04 * bits[151] +
             0x08 * bits[117];
         pulse[1][5] =
-            0x01 * bits[197] +
+                bits[197] +
             0x02 * bits[198] +
             0x04 * bits[199];
         pulse[1][6] =
-            0x01 * bits[200] +
+                bits[200] +
             0x02 * bits[201] +
             0x04 * bits[202];
         pulse[1][7] =
-            0x01 * bits[203] +
+                bits[203] +
             0x02 * bits[204] +
             0x04 * bits[205];
         pulse[1][8] =
-            0x01 * bits[206] +
+                bits[206] +
             0x02 * bits[207] +
             0x04 * bits[208];
         pulse[1][9] =
-            0x01 * bits[209] +
+                bits[209] +
             0x02 * bits[210] +
             0x04 * bits[211];
         pulse[2][0] =
-            0x01 * bits[152] +
+                bits[152] +
             0x02 * bits[153] +
             0x04 * bits[154] +
             0x08 * bits[98];
         pulse[2][1] =
-            0x01 * bits[155] +
+                bits[155] +
             0x02 * bits[156] +
             0x04 * bits[157] +
             0x08 * bits[102];
         pulse[2][2] =
-            0x01 * bits[158] +
+                bits[158] +
             0x02 * bits[159] +
             0x04 * bits[160] +
             0x08 * bits[110];
         pulse[2][3] =
-            0x01 * bits[161] +
+                bits[161] +
             0x02 * bits[162] +
             0x04 * bits[163] +
             0x08 * bits[114];
         pulse[2][4] =
-            0x01 * bits[164] +
+                bits[164] +
             0x02 * bits[165] +
             0x04 * bits[166] +
             0x08 * bits[118];
         pulse[2][5] =
-            0x01 * bits[212] +
+                bits[212] +
             0x02 * bits[213] +
             0x04 * bits[214];
         pulse[2][6] =
-            0x01 * bits[215] +
+                bits[215] +
             0x02 * bits[216] +
             0x04 * bits[217];
         pulse[2][7] =
-            0x01 * bits[218] +
+                bits[218] +
             0x02 * bits[219] +
             0x04 * bits[220];
         pulse[2][8] =
-            0x01 * bits[221] +
+                bits[221] +
             0x02 * bits[222] +
             0x04 * bits[223];
         pulse[2][9] =
-            0x01 * bits[224] +
+                bits[224] +
             0x02 * bits[225] +
             0x04 * bits[226];
         pulse[3][0] =
-            0x01 * bits[167] +
+                bits[167] +
             0x02 * bits[168] +
             0x04 * bits[169] +
             0x08 * bits[99];
         pulse[3][1] =
-            0x01 * bits[170] +
+                bits[170] +
             0x02 * bits[171] +
             0x04 * bits[172] +
             0x08 * bits[103];
         pulse[3][2] =
-            0x01 * bits[173] +
+                bits[173] +
             0x02 * bits[174] +
             0x04 * bits[175] +
             0x08 * bits[111];
         pulse[3][3] =
-            0x01 * bits[176] +
+                bits[176] +
             0x02 * bits[177] +
             0x04 * bits[178] +
             0x08 * bits[115];
         pulse[3][4] =
-            0x01 * bits[179] +
+                bits[179] +
             0x02 * bits[180] +
             0x04 * bits[181] +
             0x08 * bits[119];
         pulse[3][5] =
-            0x01 * bits[227] +
+                bits[227] +
             0x02 * bits[228] +
             0x04 * bits[229];
         pulse[3][6] =
-            0x01 * bits[230] +
+                bits[230] +
             0x02 * bits[231] +
             0x04 * bits[232];
         pulse[3][7] =
-            0x01 * bits[233] +
+                bits[233] +
             0x02 * bits[234] +
             0x04 * bits[235];
         pulse[3][8] =
-            0x01 * bits[236] +
+                bits[236] +
             0x02 * bits[237] +
             0x04 * bits[238];
         pulse[3][9] =
-            0x01 * bits[239] +
+                bits[239] +
             0x02 * bits[240] +
             0x04 * bits[241];
     }

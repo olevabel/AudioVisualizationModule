@@ -42,7 +42,7 @@ public class AudioVisulizationActivity extends BaseActivity {
         /**
          * Provide path to your audio file.
          *
-         * @return
+         * @return path of audio file provided using extra
          */
         @Override
         protected String getFileName() {
@@ -52,7 +52,7 @@ public class AudioVisulizationActivity extends BaseActivity {
         /**
          * Optional - provide list of segments (start and stop values in seconds) and their corresponding colors
          *
-         * @return
+         * @return List of segments to be highlighted
          */
         @Override
         protected List<Segment> getSegments() {

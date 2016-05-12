@@ -255,4 +255,4 @@ public class CheapMP3 extends CheapSoundFile {
         44100, 48000, 32000, 0 };
     static private int SAMPLERATES_MPEG2_L3[] = {
         22050, 24000, 16000, 0 };
-};
+}

@@ -2,10 +2,6 @@ package example.audiovisualization.app.activity;
 
 import android.os.Bundle;
 
-import com.github.hiteshsondhi88.libffmpeg.FFmpeg;
-import com.github.hiteshsondhi88.libffmpeg.LoadBinaryResponseHandler;
-import com.github.hiteshsondhi88.libffmpeg.exceptions.FFmpegNotSupportedException;
-
 import example.audiovisualization.R;
 import example.audiovisualization.app.fragment.AudioRecordFragment;
 

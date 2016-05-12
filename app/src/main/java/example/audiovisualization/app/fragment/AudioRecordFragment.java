@@ -4,10 +4,6 @@ import android.app.ProgressDialog;
 import android.content.Intent;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
-import android.media.MediaCodec;
-import android.media.MediaExtractor;
-import android.media.MediaFormat;
-import android.media.MediaMuxer;
 import android.media.MediaRecorder;
 import android.os.Bundle;
 import android.os.Environment;
@@ -28,7 +24,6 @@ import android.widget.RadioButton;
 import android.widget.SeekBar;
 import android.widget.Spinner;
 
-import com.github.hiteshsondhi88.libffmpeg.ExecuteBinaryResponseHandler;
 import com.github.hiteshsondhi88.libffmpeg.FFmpeg;
 import com.github.hiteshsondhi88.libffmpeg.FFmpegExecuteResponseHandler;
 import com.github.hiteshsondhi88.libffmpeg.FFmpegLoadBinaryResponseHandler;
@@ -51,6 +46,8 @@ import example.audiovisualization.app.activity.AudioVisulizationActivity;
 
 /**
  * Created by olevabel on 28/02/16.
+ *
+ *  General idea for making volume checker http://developer.samsung.com/technical-doc/view.do?v=T000000086
  */
 public class AudioRecordFragment extends Fragment implements AdapterView.OnItemSelectedListener {
 
@@ -70,8 +67,6 @@ public class AudioRecordFragment extends Fragment implements AdapterView.OnItemS
     private Button btnStop;
     private RadioButton radioButtonMp4;
     private RadioButton radioButtonWav;
-    private RadioButton radioButtonAutomaticVolume;
-    private RadioButton radioButtonManualVolume;
     private SeekBar volumeChangeSeekBar;
     private boolean isRecording;
     private boolean isInitialized;
@@ -99,8 +94,8 @@ public class AudioRecordFragment extends Fragment implements AdapterView.OnItemS
         btnStop = (Button) rootView.findViewById(R.id.btn_stop);
         radioButtonMp4 = (RadioButton) rootView.findViewById(R.id.format_mp4);
         radioButtonWav = (RadioButton) rootView.findViewById(R.id.format_wav);
-        radioButtonAutomaticVolume = (RadioButton) rootView.findViewById(R.id.audio_volume_type_automatic);
-        radioButtonManualVolume = (RadioButton) rootView.findViewById(R.id.audio_volume_type_manual);
+        RadioButton radioButtonAutomaticVolume = (RadioButton) rootView.findViewById(R.id.audio_volume_type_automatic);
+        RadioButton radioButtonManualVolume = (RadioButton) rootView.findViewById(R.id.audio_volume_type_manual);
         volumeChangeSeekBar = (SeekBar) rootView.findViewById(R.id.seekbar_volume_change);
         volumeChangeSeekBar.setEnabled(false);
         radioButtonManualVolume.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -212,14 +207,17 @@ public class AudioRecordFragment extends Fragment implements AdapterView.OnItemS
                     if (!isVolumeChecking) {
                         try {
                             if (radioButtonWav.isChecked()) {
-                                rawToWave(new File(setupFileName(true, false)), new File(setupFileName(false, false)));
+                                rawToWave(new File(setupFileName(true, false)), new File(setupFileName(false, false)), new FileConvertListener() {
+                                    @Override
+                                    public void onFileConverted() {
+                                        startAudioVisualizationActivity();
+                                    }
+                                });
                             } else if (radioButtonMp4.isChecked()) {
                                 rawToMp4(new File(setupFileName(true, true)), new File(setupFileName(false, true)), new FileConvertListener() {
                                     @Override
                                     public void onFileConverted() {
-                                        Intent intent = new Intent(getActivity(), AudioVisulizationActivity.class);
-                                        intent.putExtra(AudioVisulizationActivity.EXTRA_FILE_NAME, fullFileName);
-                                        startActivity(intent);
+                                        startAudioVisualizationActivity();
                                     }
                                 });
                             }
@@ -233,6 +231,12 @@ public class AudioRecordFragment extends Fragment implements AdapterView.OnItemS
             }
         });
         return rootView;
+    }
+
+    private void startAudioVisualizationActivity() {
+        Intent intent = new Intent(getActivity(), AudioVisulizationActivity.class);
+        intent.putExtra(AudioVisulizationActivity.EXTRA_FILE_NAME, fullFileName);
+        startActivity(intent);
     }
 
     private void initFFmpeg() {
@@ -363,10 +367,13 @@ public class AudioRecordFragment extends Fragment implements AdapterView.OnItemS
         fullFileName = directory.getAbsolutePath() + "/" + FILENAME + WAV_EXT;
         return fullFileName;
     }
-
-
-    private void rawToWave(final File rawFile, final File waveFile) throws IOException {
-
+    /*
+    * Code example from http://stackoverflow.com/questions/9179536/writing-pcm-recorded-data-into-a-wav-file-java-android
+    * */
+    private void rawToWave(final File rawFile, final File waveFile, FileConvertListener listener) throws IOException {
+        ProgressDialog progressDialog = new ProgressDialog(getActivity());
+        progressDialog.setMessage(getActivity().getString(R.string.progress_dialog_loading));
+        progressDialog.show();
         byte[] rawData = new byte[(int) rawFile.length()];
         DataInputStream input = null;
         try {
@@ -397,13 +404,19 @@ public class AudioRecordFragment extends Fragment implements AdapterView.OnItemS
             outFile.write(rawData);                        // 44 - the actual data itself - just a long string of numbers
             outFile.close();
             rawFile.delete();
+            progressDialog.dismiss();
+            listener.onFileConverted();
         } catch (Exception e) {
             System.out.println(e.getMessage());
+            progressDialog.dismiss();
         }
 
 
     }
 
+  /*
+  * Instructions from http://writingminds.github.io/ffmpeg-android-java/
+  * */
     private void rawToMp4(final File rawFile, File mp4File, final FileConvertListener listener) {
         final ProgressDialog progressDialog = new ProgressDialog(getActivity());
         progressDialog.setMessage(getActivity().getString(R.string.progress_dialog_loading));
@@ -427,6 +440,7 @@ public class AudioRecordFragment extends Fragment implements AdapterView.OnItemS
                 @Override
                 public void onFailure(String message) {
                     Log.d("failure", message);
+                    progressDialog.dismiss();
                 }
 
                 @Override
@@ -444,12 +458,12 @@ public class AudioRecordFragment extends Fragment implements AdapterView.OnItemS
         }
     }
 
-
+    // convert an int to a byte array with little endian order
     private static byte[] intToByteArray(int i) {
         return ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt(i).array();
     }
 
-    // convert a short to a byte array
+    // convert a short to a byte array with little endian order
     public static byte[] shortToByteArray(short data) {
         return ByteBuffer.allocate(2).order(ByteOrder.LITTLE_ENDIAN).putShort(data).array();
     }

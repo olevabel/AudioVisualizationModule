@@ -39,16 +39,16 @@ import android.widget.ImageView;
 public class MarkerView extends ImageView {
 
     public interface MarkerListener {
-        public void markerTouchStart(MarkerView marker, float pos);
-        public void markerTouchMove(MarkerView marker, float pos);
-        public void markerTouchEnd(MarkerView marker);
-        public void markerFocus(MarkerView marker);
-        public void markerLeft(MarkerView marker, int velocity);
-        public void markerRight(MarkerView marker, int velocity);
-        public void markerEnter(MarkerView marker);
-        public void markerKeyUp();
-        public void markerDraw();
-    };
+        void markerTouchStart(MarkerView marker, float pos);
+        void markerTouchMove(MarkerView marker, float pos);
+        void markerTouchEnd(MarkerView marker);
+        void markerFocus(MarkerView marker);
+        void markerLeft(MarkerView marker, int velocity);
+        void markerRight(MarkerView marker, int velocity);
+        void markerEnter(MarkerView marker);
+        void markerKeyUp();
+        void markerDraw();
+    }
 
     private int mVelocity;
     private MarkerListener mListener;
