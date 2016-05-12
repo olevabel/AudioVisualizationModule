@@ -19,6 +19,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.CompoundButton;
 import android.widget.ProgressBar;
 import android.widget.RadioButton;
 import android.widget.SeekBar;
@@ -78,7 +79,17 @@ public class AudioRecordFragment extends Fragment implements AdapterView.OnItemS
         Button btnStop = (Button) rootView.findViewById(R.id.btn_stop);
         final RadioButton btnMp4 = (RadioButton) rootView.findViewById(R.id.format_mp4);
         final RadioButton btnWav = (RadioButton) rootView.findViewById(R.id.format_wav);
-        SeekBar volumeChangeSeekBar = (SeekBar) rootView.findViewById(R.id.seekbar_volume_change);
+        final  RadioButton btnAutomaticVolume = (RadioButton) rootView.findViewById(R.id.audio_volume_type_automatic);
+        final  RadioButton btnManualVolume = (RadioButton) rootView.findViewById(R.id.audio_volume_type_manual);
+
+        final SeekBar volumeChangeSeekBar = (SeekBar) rootView.findViewById(R.id.seekbar_volume_change);
+        volumeChangeSeekBar.setEnabled(false);
+        btnManualVolume.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                    volumeChangeSeekBar.setEnabled(isChecked);
+            }
+        });
         volumeChangeSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
