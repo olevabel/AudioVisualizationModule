@@ -1,0 +1,28 @@
+<resources>
+    <string name="app_name">Audiovisual Module</string>
+    <string name="start_marker">Start marker</string>
+    <string name="end_marker">End marker</string>
+    <string name="rewind">Rewind</string>
+    <string name="play">Play</string>
+    <string name="stop">Stop</string>
+    <string name="ffwd">Fast forward</string>
+    <string name="start_label">Start:</string>
+    <string name="end_label">End:</string>
+    <string name="progress_dialog_loading">Loading...</string>
+    <string name="time_seconds">seconds</string>
+    <string name="btn_check_volume">Check volume</string>
+    <string name="btn_stop">Stop</string>
+    <string name="btn_record">Record</string>
+    <string name="format_mp4">MP4</string>
+    <string name="format_wav">WAV</string>
+    <string name="audio_record_activity">Audio Record View</string>
+    <string name="audio_visualization_activity">Audio Visualization View</string>
+    <string name="automatic_volume">Automatic volume</string>
+    <string name="manual_volume">Manual volume</string>
+    <string name="dialog_permission_not_granted">Permission not granted. Cannot proceed. Closing app</string>
+    <string name="btn_ok">Ok</string>
+    <string-array name="sources_array">
+        <item>UpperMic</item>
+        <item>LowerMic</item>
+    </string-array>
+</resources>
