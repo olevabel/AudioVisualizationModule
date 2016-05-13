@@ -1,7 +1,10 @@
 package example.audiovisualization.app.fragment;
 
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
@@ -9,8 +12,11 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -51,6 +57,10 @@ import example.audiovisualization.app.activity.AudioVisulizationActivity;
  */
 public class AudioRecordFragment extends Fragment implements AdapterView.OnItemSelectedListener {
 
+    private static final int PERMISSION_RECORD_AUDIO = 101;
+    private static final int PERMISSION_WRITE_EXTERNAL_STORAGE = 102;
+    private static final int PERMISSION_READ_EXTERNAL_STORAGE = 103;
+
     private static final int RECORDER_BPP = 16;
     private static final int RECORDER_SAMPLE_RATE = 44100;
     private static final int RECORDER_CHANNELS = AudioFormat.CHANNEL_IN_MONO;
@@ -88,6 +98,7 @@ public class AudioRecordFragment extends Fragment implements AdapterView.OnItemS
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_voice_meter, container, false);
         initFFmpeg();
+        checkPermissions();
         meter = (ProgressBar) rootView.findViewById(R.id.sound_meter);
         btnCheckVolume = (Button) rootView.findViewById(R.id.btn_check_volume);
         btnRecord = (Button) rootView.findViewById(R.id.btn_record);
@@ -231,6 +242,51 @@ public class AudioRecordFragment extends Fragment implements AdapterView.OnItemS
             }
         });
         return rootView;
+    }
+
+    private void checkPermissions() {
+        if(ContextCompat.checkSelfPermission(getActivity(), android.Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(getActivity(), new String[] {android.Manifest.permission.RECORD_AUDIO},PERMISSION_RECORD_AUDIO);
+        }
+        if(ContextCompat.checkSelfPermission(getActivity(), android.Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(getActivity(), new String[] {android.Manifest.permission.WRITE_EXTERNAL_STORAGE}, PERMISSION_WRITE_EXTERNAL_STORAGE);
+        }
+        if(ContextCompat.checkSelfPermission(getActivity(), android.Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(getActivity(), new String[] {android.Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSION_READ_EXTERNAL_STORAGE);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        switch (requestCode) {
+            case PERMISSION_RECORD_AUDIO:
+                resolvePermissionRequest(grantResults);
+                break;
+            case PERMISSION_WRITE_EXTERNAL_STORAGE:
+                resolvePermissionRequest(grantResults);
+                break;
+            case PERMISSION_READ_EXTERNAL_STORAGE:
+                resolvePermissionRequest(grantResults);
+                break;
+        }
+    }
+
+    private void resolvePermissionRequest(@NonNull int[] grantResults) {
+        if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
+            // No nothing we have the permission
+            Log.d("Permission granted", "Record Audio permission granted");
+        } else {
+            AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+            builder.setMessage(getActivity().getString(R.string.dialog_permission_not_granted));
+            builder.setCancelable(false);
+            builder.setPositiveButton(getActivity().getString(R.string.btn_ok), new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    getActivity().finish();
+                }
+            });
+            builder.show();
+        }
     }
 
     private void startAudioVisualizationActivity() {
